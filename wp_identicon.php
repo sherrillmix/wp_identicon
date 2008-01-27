@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: WP_Identicon
-Version: 0.54
+Version: 0.55
 Plugin URI: http://scott.sherrillmix.com/blog/blogger/wp_identicon/
 Description: This plugin generates persistent specific geometric icons for each user based on the ideas of <a href="http://www.docuverse.com/blog/donpark/2007/01/18/visual-security-9-block-ip-identification">Don Park</a>.
 Author: Scott Sherrill-Mix
@@ -224,7 +224,7 @@ class identicon {
 				imagedestroy($out);
 			}
 			$filename=get_option('siteurl').'/'.WP_IDENTICON_DIR.$filename;
-			if($identicon_options['gravatar'])
+			if($this->identicon_options['gravatar'])
         $filename = "http://www.gravatar.com/avatar.php?gravatar_id=".md5($seed)."&amp;size=$size&amp;default=$filename";
 			if ($img){
 				$filename='<img class="identicon" src="'.$filename.'" alt="'.str_replace('"',"'",$altImgText).' Identicon Icon" height="'.$outsize.'" width="'.$outsize.'" />';
