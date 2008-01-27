@@ -224,7 +224,7 @@ class identicon {
 				imagedestroy($out);
 			}
 			$filename=get_option('siteurl').'/'.WP_IDENTICON_DIR.$filename;
-			if($monsterID_options['gravatar'])
+			if($identicon_options['gravatar'])
         $filename = "http://www.gravatar.com/avatar.php?gravatar_id=".md5($seed)."&amp;size=$size&amp;default=$filename";
 			if ($img){
 				$filename='<img class="identicon" src="'.$filename.'" alt="'.str_replace('"',"'",$altImgText).' Identicon Icon" height="'.$outsize.'" width="'.$outsize.'" />';
