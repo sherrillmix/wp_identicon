@@ -4,7 +4,7 @@ Donate link: http://scott.sherrillmix.com/blog/
 Tags: comments, avatar, identicon, geometric, shape , gravatar, icon
 Requires at least: 1.5
 Tested up to: 2.3.1
-Stable tag: 0.51
+Stable tag: 0.52
 
 Creates a unique, persistent geometric icons avatar for each commenter based on email address. 
 
