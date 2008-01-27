@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: WP_Identicon
-Version: 0.55
+Version: 0.56
 Plugin URI: http://scott.sherrillmix.com/blog/blogger/wp_identicon/
 Description: This plugin generates persistent specific geometric icons for each user based on the ideas of <a href="http://www.docuverse.com/blog/donpark/2007/01/18/visual-security-9-block-ip-identification">Don Park</a>.
 Author: Scott Sherrill-Mix
@@ -370,8 +370,8 @@ function identicon_subpanel() {
 	<div class="wrap"><p>For curiosity's sake, here are the parts the identicons are built from:</p><div class='wrap'>
 	<?php echo $identicon->identicon_display_parts();?>
 	</div>
-	<h4>For advanced users:</h4> <p>Disable the automatic Indenticon placement and put: <br/> <code><?php echo htmlspecialchars('<?php if (isset($identicon)) {echo $identicon->identicon_build($comment->comment_author_email,$comment->comment_author); } ?>');?></code><br/> in the comment loop of your theme comment script (probably <code>comments.php</code>). Or if you're more confident and just want the img URL use:
-	<code><?php echo htmlspecialchars('<?php if (isset($identicon)) {echo $identicon->identicon_build($comment->comment_author_email,$comment->comment_author,false); } ?>');?></code></p>
+	<h4>For advanced users:</h4> <p>Disable the automatic Indenticon placement and put: <br/> <code><?php echo htmlspecialchars('<?php if (function_exists("identicon_build")) {echo identicon_build($comment->comment_author_email,$comment->comment_author); } ?>');?></code><br/> in the comment loop of your theme comment script (probably <code>comments.php</code>). Or if you're more confident and just want the img URL use:
+	<code><?php echo htmlspecialchars('<?php if (function_exists("identicon_build")) {echo identicon_build($comment->comment_author_email,$comment->comment_author,false); } ?>');?></code></p>
 	<p>Please see the <a href="http://scott.sherrillmix.com/blog/blogger/wp_identicon/">plugin page</a> if you need more details.</p></div>
 	
 
@@ -446,6 +446,12 @@ function identicon_comment_author($output){
 		}
 		return $output;
 }
+
+function identicon_build($seed='',$altImgText='',$img=true,$outsize='',$write=true,$random=true){
+	global $identicon;
+	return $identicon->identicon_build($seed,$altImgText,$img,$outsize,$write,$random);
+}
+
 
 //Hooks
 add_action('admin_menu', 'identicon_menu');
