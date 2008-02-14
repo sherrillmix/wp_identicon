@@ -4,7 +4,7 @@ Donate link: http://scott.sherrillmix.com/blog/
 Tags: comments, avatar, identicon, geometric, shape , gravatar, icon
 Requires at least: 1.5
 Tested up to: 2.3.1
-Stable tag: 0.56
+Stable tag: 0.61
 
 Creates a unique, persistent geometric icons avatar for each commenter based on email address. 
 
@@ -29,6 +29,10 @@ Yes, if they're using the standard version (and I didn't mess up anything).
 = Can it generate Identicons only for people without gravatars? =
 
 Yes. Just turn on the Gravatar option in the Identicons options page.
+
+= Can I add Identicons to the Recent Comments Widget in my sidebar? =
+
+Yes, this plugin provides a replacement widget to Recent Comments (since the default widget doesn't provide the commenter's email).
 
 = Could you implement XXXX feature? =
 

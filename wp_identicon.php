@@ -1,15 +1,15 @@
 <?php
 /*
 Plugin Name: WP_Identicon
-Version: 0.56
+Version: 0.61
 Plugin URI: http://scott.sherrillmix.com/blog/blogger/wp_identicon/
 Description: This plugin generates persistent specific geometric icons for each user based on the ideas of <a href="http://www.docuverse.com/blog/donpark/2007/01/18/visual-security-9-block-ip-identification">Don Park</a>.
 Author: Scott Sherrill-Mix
 Author URI: http://scott.sherrillmix.com/blog/
 */
 
-define('WP_IDENTICON_DIR', 'wp-content/plugins/identicon/');
-define('WP_IDENTICON_DIR_INTERNAL', ABSPATH.'wp-content/plugins/identicon/');
+define('WP_IDENTICON_DIR',  str_replace('\\','/',preg_replace('@.*([\\\\/]wp-content[\\\\/].*)@','\1',dirname(__FILE__)).'/identicon/'));
+define('WP_IDENTICON_DIR_INTERNAL', dirname(__FILE__).'/identicon/');
 
 
 function identicon_menu() {
@@ -189,7 +189,7 @@ class identicon {
 		return true;
 	}
 
-	function identicon_build($seed='',$altImgText='',$img=true,$outsize='',$write=true,$random=true){
+	function identicon_build($seed='',$altImgText='',$img=true,$outsize='',$write=true,$random=true,$displaysize=''){
 		//make an identicon and return the filepath or if write=false return picture directly
 		if (function_exists("gd_info")){
 			// init random seed
@@ -197,6 +197,7 @@ class identicon {
 			else $id=$seed;
 			$filename=substr(sha1($id.substr(get_option('admin_email'),0,5)),0,15).'.png';
 			if ($outsize=='') $outsize=$this->identicon_options['size'];
+			if($displaysize=='') $displaysize=$outsize;
 			if (!file_exists(WP_IDENTICON_DIR_INTERNAL.$filename)){
 				$this->im = imagecreatetruecolor($this->size,$this->size);	
 				$this->colors = array(imagecolorallocate($this->im, 255,255,255));
@@ -223,11 +224,11 @@ class identicon {
 				}
 				imagedestroy($out);
 			}
-			$filename=get_option('siteurl').'/'.WP_IDENTICON_DIR.$filename;
+			$filename=get_option('siteurl').WP_IDENTICON_DIR.$filename;
 			if($this->identicon_options['gravatar'])
-        $filename = "http://www.gravatar.com/avatar.php?gravatar_id=".md5($seed)."&amp;size=$size&amp;default=$filename";
+        $filename = "http://www.gravatar.com/avatar.php?gravatar_id=".md5($seed)."&amp;size=$outsize&amp;default=$filename";
 			if ($img){
-				$filename='<img class="identicon" src="'.$filename.'" alt="'.str_replace('"',"'",$altImgText).' Identicon Icon" height="'.$outsize.'" width="'.$outsize.'" />';
+				$filename='<img class="identicon" src="'.$filename.'" alt="'.str_replace('"',"'",$altImgText).' Identicon Icon" height="'.$displaysize.'" width="'.$displaysize.'" />';
 			}
 			return $filename;
 		} else { //php GD image manipulation is required
@@ -249,6 +250,7 @@ class identicon {
 }
 
 //create identicon for later use
+global $identicon;
 $identicon = new identicon;
 
 function identicon_get_options(){
@@ -362,6 +364,7 @@ function identicon_subpanel() {
 	</form>
 	</div>
 	<div class='wrap'><h4>To use Identicon:</h4> <p>Make sure the folder <code>wp-content/plugins/identicon</code> is writable. Identicons should automatically be added beside your commentors names after that. Enjoy.</p> 
+	<p>If you use the Recent Comments Widget in your sidebar, this plugin also provides a replacement Recent Comments (with Identicons) Widget to add Identicons to the comments (just set it in the Widgets Control Panel)</p>
 	<strong>Testing:</strong><br/>
 	<?php if (!is_writable(''.WP_IDENTICON_DIR_INTERNAL)){echo "<div class='error'><p>Identicon needs ".WP_IDENTICON_DIR_INTERNAL." to be writable.</p></div>";}
 	if (!function_exists("gd_info")){echo "<div class='error'><p>GD Image library not found. Identicon needs this library.</p></div>";}?>
@@ -457,4 +460,93 @@ function identicon_build($seed='',$altImgText='',$img=true,$outsize='',$write=tr
 add_action('admin_menu', 'identicon_menu');
 add_filter('get_comment_author','identicon_comment_author');
 
+
+//Widget stuff 
+//Wordpress's default widget doesn't get commenter email so we can't use it for identicons
+//Copying their widget with some search and replace with identicon
+function identicon_recent_comments($args) {
+	global $wpdb, $comments, $comment, $identicon;
+	extract($args, EXTR_SKIP);
+	$options = get_option('widget_identicon_recent_comments');
+	$title = empty($options['title']) ? __('Recent Comments') : $options['title'];
+	if ( !$number = (int) $options['number'] )
+		$number = 5;
+	else if ( $number < 1 )
+		$number = 1;
+	else if ( $number > 15 )
+		$number = 15;
+	if ( !$size = (int) $options['identicon_size'] )
+		$size = 10;
+	else if ( $size < 1 )
+		$size=1;
+	else if($size > 50)
+		$size=50;
+	if ( !$comments = wp_cache_get( 'identicon_recent_comments', 'widget' ) ) {
+		$comments = $wpdb->get_results("SELECT comment_author, comment_author_url, comment_ID, comment_post_ID, comment_author_email, comment_type FROM $wpdb->comments WHERE comment_approved = '1' ORDER BY comment_date_gmt DESC LIMIT $number");
+		wp_cache_add( 'identicon_recent_comments', $comments, 'widget' );
+	}
+?>
+
+		<?php echo $before_widget; ?>
+			<?php echo $before_title . $title . $after_title; ?>
+			<ul id="identicon_recentcomments"><?php
+			if ( $comments ) : foreach ($comments as $comment) :
+				echo  '<li class="recentcomments">';
+				if($comment->comment_type!="pingback"&&$comment->comment_type!="trackback"&&isset($identicon))
+					echo $identicon->identicon_build($comment->comment_author_email,$comment->comment_author,TRUE,'',TRUE,TRUE,$size);
+				echo sprintf(__('%1$s on %2$s'), get_comment_author_link(), '<a href="'. get_permalink($comment->comment_post_ID) . '#comment-' . $comment->comment_ID . '">' . get_the_title($comment->comment_post_ID) . '</a>') . '</li>';
+			endforeach; endif;?></ul>
+		<?php echo $after_widget; ?>
+<?php
+}
+
+function wp_delete_identicon_recent_comments_cache() {
+	wp_cache_delete( 'identicon_recent_comments', 'widget' );
+}
+
+function identicon_recent_comments_control() {
+	$options = $newoptions = get_option('widget_identicon_recent_comments');
+	if ( $_POST["identicon_recent-comments-submit"] ) {
+		$newoptions['title'] = strip_tags(stripslashes($_POST["identicon_recent-comments-title"]));
+		$newoptions['number'] = (int) $_POST["identicon_recent-comments-number"];
+		$newoptions['identicon_size'] = (int) $_POST["identicon_size"];
+	}
+	if ( $options != $newoptions ) {
+		$options = $newoptions;
+		update_option('widget_identicon_recent_comments', $options);
+		wp_delete_identicon_recent_comments_cache();
+	}
+	$title = attribute_escape($options['title']);
+	if ( !$number = (int) $options['number'] )
+		$number = 5;
+	if ( !$size = (int) $options['identicon_size'] )
+		$size = 10;
+?>
+			<p><label for="identicon_recent-comments-title"><?php _e('Title:'); ?> <input style="width: 250px;" id="identicon_recent-comments-title" name="identicon_recent-comments-title" type="text" value="<?php echo $title; ?>" /></label></p>
+			<p><label for="identicon_recent-comments-number"><?php _e('Number of comments to show:'); ?> <input style="width: 25px; text-align: center;" id="identicon_recent-comments-number" name="identicon_recent-comments-number" type="text" value="<?php echo $number; ?>" /></label> <?php _e('(at most 15)'); ?></p>
+			<p><label for="identicon_size"><?php _e('Size of Widget Identicons (pixels):'); ?> <input style="width: 25px; text-align: center;" id="identicon_size" name="identicon_size" type="text" value="<?php echo $size; ?>" /></label></p>
+			<input type="hidden" id="identicon_recent-comments-submit" name="identicon_recent-comments-submit" value="1" />
+<?php
+}
+
+function identicon_recent_comments_style() {
+?>
+<style type="text/css">
+	ul#identicon_recentcomments{list-style:none;} 
+	ul#identicon_recentcomments li.recentcomments:before{content:"";} 
+	.recentcomments a{display:inline !important;padding: 0 !important;margin: 0 !important;}
+</style>
+<?php
+}
+
+function identicon_recent_comments_widget_init(){
+	register_sidebar_widget('Recent Comments (with Identicons)', 'identicon_recent_comments');
+	register_widget_control('Recent Comments (with Identicons)', 'identicon_recent_comments_control', 320, 90);
+	if ( is_active_widget('identicon_recent_comments') )
+		add_action('wp_head', 'identicon_recent_comments_style');
+	add_action( 'comment_post', 'wp_delete_identicon_recent_comments_cache' );
+	add_action( 'wp_set_comment_status', 'wp_delete_identicon_recent_comments_cache' );
+}
+
+add_action('widgets_init', 'identicon_recent_comments_widget_init');
 ?>
