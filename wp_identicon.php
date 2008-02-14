@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: WP_Identicon
-Version: 0.61
+Version: 0.62
 Plugin URI: http://scott.sherrillmix.com/blog/blogger/wp_identicon/
 Description: This plugin generates persistent specific geometric icons for each user based on the ideas of <a href="http://www.docuverse.com/blog/donpark/2007/01/18/visual-security-9-block-ip-identification">Don Park</a>.
 Author: Scott Sherrill-Mix
@@ -364,7 +364,7 @@ function identicon_subpanel() {
 	</form>
 	</div>
 	<div class='wrap'><h4>To use Identicon:</h4> <p>Make sure the folder <code>wp-content/plugins/identicon</code> is writable. Identicons should automatically be added beside your commentors names after that. Enjoy.</p> 
-	<p>If you use the Recent Comments Widget in your sidebar, this plugin also provides a replacement Recent Comments (with Identicons) Widget to add Identicons to the comments (just set it in the Widgets Control Panel)</p>
+	<p>If you use the Recent Comments Widget in your sidebar, this plugin also provides a replacement Recent Comments (with Identicons) Widget to add Identicons to the sidebar comments (just set it in the Widgets Control Panel)</p>
 	<strong>Testing:</strong><br/>
 	<?php if (!is_writable(''.WP_IDENTICON_DIR_INTERNAL)){echo "<div class='error'><p>Identicon needs ".WP_IDENTICON_DIR_INTERNAL." to be writable.</p></div>";}
 	if (!function_exists("gd_info")){echo "<div class='error'><p>GD Image library not found. Identicon needs this library.</p></div>";}?>
@@ -493,7 +493,7 @@ function identicon_recent_comments($args) {
 			if ( $comments ) : foreach ($comments as $comment) :
 				echo  '<li class="recentcomments">';
 				if($comment->comment_type!="pingback"&&$comment->comment_type!="trackback"&&isset($identicon))
-					echo $identicon->identicon_build($comment->comment_author_email,$comment->comment_author,TRUE,'',TRUE,TRUE,$size);
+					echo $identicon->identicon_build($comment->comment_author_email,$comment->comment_author,TRUE,'',TRUE,TRUE,$size).' ';
 				echo sprintf(__('%1$s on %2$s'), get_comment_author_link(), '<a href="'. get_permalink($comment->comment_post_ID) . '#comment-' . $comment->comment_ID . '">' . get_the_title($comment->comment_post_ID) . '</a>') . '</li>';
 			endforeach; endif;?></ul>
 		<?php echo $after_widget; ?>
@@ -533,7 +533,8 @@ function identicon_recent_comments_style() {
 ?>
 <style type="text/css">
 	ul#identicon_recentcomments{list-style:none;} 
-	ul#identicon_recentcomments li.recentcomments:before{content:"";} 
+	ul#identicon_recentcomments li.recentcomments:before{content:"";}
+	ul#identicon_recentcomments img.identicon{vertical-align:middle;}
 	.recentcomments a{display:inline !important;padding: 0 !important;margin: 0 !important;}
 </style>
 <?php
