@@ -3,8 +3,8 @@ Contributors: scottsm
 Donate link: http://scott.sherrillmix.com/blog/
 Tags: comments, avatar, identicon, geometric, shape , gravatar, icon
 Requires at least: 1.5
-Tested up to: 2.3.1
-Stable tag: 0.62
+Tested up to: 2.5
+Stable tag: 1.0
 
 Creates a unique, persistent geometric icons avatar for each commenter based on email address. 
 
@@ -17,6 +17,7 @@ This plugin provides a small randomly assembled icon made from geometric shapes 
 1. Unzip `wp_identicon.zip`. 
 1. Upload `wp_identicon.php` and the `identicon` folder to `wp-content/plugins`. 
 1. Make sure the `identicon` folder is [writable](http://codex.wordpress.org/Changing_File_Permissions). 
+1. Activate the plugin in the Plugins Admin page.
 1. Identicons should now appear beside commenters' names. Enjoy. (Advanced users can edit their theme file if they want further control).
 1. You can add CSS for `img.identicon` in your theme's style.css to adjust the appearance of the images or adjust the size in the Identicon control panel (your old identicons won't be deleted until you clear the cache). You can also turn on Gravatar support or clear the Identicon image cache in the Control Panel.
 
@@ -33,6 +34,14 @@ Yes. Just turn on the Gravatar option in the Identicons options page.
 = Can I add Identicons to the Recent Comments Widget in my sidebar? =
 
 Yes, this plugin provides a replacement widget to Recent Comments (since the default widget doesn't provide the commenter's email).
+
+= Does it work with WP 2.5+ themes with builtin avatars? =
+
+Yes, just select the WP 2.5+ Theme option to the Automatically Add Identicons setting in the Identicon control panel.
+
+= Why should I use this plugin when Gravatars now has Identicons? = 
+
+The gravatar identicons are pretty good but if you want more control (custom colors, transparent backgrounds, different numbers of blocks) or just want one set of avatars for everyone on your site, then this plugin's for you. Otherwise, sure go with gravatars (just set <code>&default=identicon</code> in the gravatar url).
 
 = Could you implement XXXX feature? =
 
