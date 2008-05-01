@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: WP_Identicon
-Version: 0.62
+Version: 1.0
 Plugin URI: http://scott.sherrillmix.com/blog/blogger/wp_identicon/
 Description: This plugin generates persistent specific geometric icons for each user based on the ideas of <a href="http://www.docuverse.com/blog/donpark/2007/01/18/visual-security-9-block-ip-identification">Don Park</a>.
 Author: Scott Sherrill-Mix
@@ -295,6 +295,7 @@ function identicon_subpanel() {
 		}
 		if ($_POST['autoadd'] == 0) $identicon_options['autoadd']=0;
 		elseif ($_POST['autoadd'] == 1) $identicon_options['autoadd']=1;
+		elseif ($_POST['autoadd'] == 2) $identicon_options['autoadd']=2;
 		if ($_POST['gravatar'] == 0) $identicon_options['gravatar']=0;
 		elseif ($_POST['gravatar'] == 1) $identicon_options['gravatar']=1;
 		if ($_POST['grey'] == 1) $identicon_options['grey']=1;
@@ -354,7 +355,7 @@ function identicon_subpanel() {
 	<?php echo $input_detail['g'];?><input type="<?php echo $gbtype;?>" name="foreg" <?php echo $input_back['g'];?> value="<?php echo implode($identicon_options['foreg'],'-');?>"/>
 	<?php echo $input_detail['b'];?><input type="<?php echo $gbtype;?>" name="foreb" <?php echo $input_back['b'];?> value="<?php echo implode($identicon_options['foreb'],'-');?>"/></li>
 	<li><strong>Grayscale</strong> (Good for black and white themes):<input type="checkbox" name="grey" value="1" <?php if ($identicon_options['grey']) echo 'checked="checked"';?> /></li>
-	<li><strong>Automatically Add Identicons to Comments</strong> (adds an Identicon beside commenter names or disable it and edit theme file manually) (default: Auto)<br /> <input type="radio" name="autoadd" value="0" <?php if (!$identicon_options['autoadd']) echo 'checked="checked"';?>/> I'll Do It Myself <input type="radio" name="autoadd" value="1" <?php if ($identicon_options['autoadd']) echo 'checked="checked"';?>/> Add Identicons For Me</li>
+	<li><strong>Automatically Add Identicons to Comments</strong> (adds an Identicon beside commenter names or disable it and edit theme file manually) (default: Auto)<br /> <input type="radio" name="autoadd" value="0" <?php if (!$identicon_options['autoadd']) echo 'checked="checked"';?>/> I'll Do It Myself <input type="radio" name="autoadd" value="1" <?php if ($identicon_options['autoadd']==1) echo 'checked="checked"';?>/> Add Identicons For Me <input type="radio" name="autoadd" value="2" <?php if ($identicon_options['autoadd']==2) echo 'checked="checked"';?>/> My Theme Has Builtin WP2.5+ Avatars</li>
 	<li><strong>Gravatar Support</strong> (If a commenter has a gravatar use it, otherwise use Identicon) (default: Identicon Only)<br /> <input type="radio" name="gravatar" value="0" <?php if (!$identicon_options['gravatar']) echo 'checked="checked"';?>/> Identicon Only <input type="radio" name="gravatar" value="1" <?php if ($identicon_options['gravatar']) echo 'checked="checked"';?>/> Gravatar + Identicon</li>
 	<li><input type="submit" name="submit" value="Set Options"/></li>
 	</ul>
@@ -444,7 +445,7 @@ function identicon_comment_author($output){
 		global $comment;
 		global $identicon;
 		$identicon_options=identicon_get_options();
-		if((is_page () || is_single ()) && $identicon_options['autoadd'] && $comment->comment_type!="pingback"&&$comment->comment_type!="trackback"){
+		if((is_page () || is_single ()) && $identicon_options['autoadd']==1 && $comment->comment_type!="pingback"&&$comment->comment_type!="trackback" && isset($comment->comment_karma)){ //assuming sidebar widgets won't check comment karma (and single page comments will)
 			if (isset($identicon)) $output=$identicon->identicon_build($comment->comment_author_email,$comment->comment_author).' '.$output; 
 		}
 		return $output;
@@ -456,10 +457,28 @@ function identicon_build($seed='',$altImgText='',$img=true,$outsize='',$write=tr
 }
 
 
+function identicon_get_avatar($avatar, $id_or_email, $size, $default){
+	global $identicon;
+	if(!isset($identicon)) return $avatar;
+	if(!$avatar) return identicon_build($id_or_email->comment_author_email,'','',true,$size);
+	if(!$identicon->identicon_options['gravatar']){
+		$identiconurl=identicon_build($id_or_email->comment_author_email,'','',false,$size);
+		$newavatar=preg_replace('@src=(["\'])http://[^"\']+["\']@','src=\1'.$identiconurl.'\1',$avatar);
+		$avatar=$newavatar;
+	}elseif(!$identicon->identicon_options['gravatar']==1){
+		$identiconurl=identicon_build($id_or_email->comment_author_email,'','',false,$size);
+		$newavatar=preg_replace('@&amp;d=http[^&]+&amp;@','&amp;d='.urlencode($identiconurl).'&amp;',$avatar);
+		$avatar=$newavatar;
+	}
+	return($avatar);
+}
+
 //Hooks
 add_action('admin_menu', 'identicon_menu');
 add_filter('get_comment_author','identicon_comment_author');
-
+if($wp_version>=2.5&&$identicon->identicon_options['autoadd']==2){
+	add_filter('get_avatar','identicon_get_avatar',5,4);
+}
 
 //Widget stuff 
 //Wordpress's default widget doesn't get commenter email so we can't use it for identicons
