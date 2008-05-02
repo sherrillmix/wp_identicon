@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: WP_Identicon
-Version: 1.0
+Version: 1.01
 Plugin URI: http://scott.sherrillmix.com/blog/blogger/wp_identicon/
 Description: This plugin generates persistent specific geometric icons for each user based on the ideas of <a href="http://www.docuverse.com/blog/donpark/2007/01/18/visual-security-9-block-ip-identification">Don Park</a>.
 Author: Scott Sherrill-Mix
@@ -189,7 +189,7 @@ class identicon {
 		return true;
 	}
 
-	function identicon_build($seed='',$altImgText='',$img=true,$outsize='',$write=true,$random=true,$displaysize=''){
+	function identicon_build($seed='',$altImgText='',$img=true,$outsize='',$write=true,$random=true,$displaysize='',$gravataron=true){
 		//make an identicon and return the filepath or if write=false return picture directly
 		if (function_exists("gd_info")){
 			// init random seed
@@ -225,7 +225,7 @@ class identicon {
 				imagedestroy($out);
 			}
 			$filename=get_option('siteurl').WP_IDENTICON_DIR.$filename;
-			if($this->identicon_options['gravatar'])
+			if($this->identicon_options['gravatar']&&$gravataron)
         $filename = "http://www.gravatar.com/avatar.php?gravatar_id=".md5($seed)."&amp;size=$outsize&amp;default=$filename";
 			if ($img){
 				$filename='<img class="identicon" src="'.$filename.'" alt="'.str_replace('"',"'",$altImgText).' Identicon Icon" height="'.$displaysize.'" width="'.$displaysize.'" />';
@@ -451,23 +451,26 @@ function identicon_comment_author($output){
 		return $output;
 }
 
-function identicon_build($seed='',$altImgText='',$img=true,$outsize='',$write=true,$random=true){
+function identicon_build($seed='',$altImgText='',$img=true,$outsize='',$write=true,$random=true,$displaysize='',$gravataron=true){
 	global $identicon;
-	return $identicon->identicon_build($seed,$altImgText,$img,$outsize,$write,$random);
+	return $identicon->identicon_build($seed,$altImgText,$img,$outsize,$write,$random,$displaysize,$gravataron);
 }
-
 
 function identicon_get_avatar($avatar, $id_or_email, $size, $default){
 	global $identicon;
 	if(!isset($identicon)) return $avatar;
 	if(!$avatar) return identicon_build($id_or_email->comment_author_email,'','',true,$size);
 	if(!$identicon->identicon_options['gravatar']){
-		$identiconurl=identicon_build($id_or_email->comment_author_email,'','',false,$size);
+		$identiconurl=identicon_build($id_or_email->comment_author_email,'',false);
 		$newavatar=preg_replace('@src=(["\'])http://[^"\']+["\']@','src=\1'.$identiconurl.'\1',$avatar);
 		$avatar=$newavatar;
-	}elseif(!$identicon->identicon_options['gravatar']==1){
-		$identiconurl=identicon_build($id_or_email->comment_author_email,'','',false,$size);
-		$newavatar=preg_replace('@&amp;d=http[^&]+&amp;@','&amp;d='.urlencode($identiconurl).'&amp;',$avatar);
+	}elseif($identicon->identicon_options['gravatar']==1){
+		$identiconurl=identicon_build($id_or_email->comment_author_email,'',false,'',true,true,$size,false);
+		if(strpos($avatar,'default=http://')!==false){
+			$newavatar=preg_replace('@default=http://[^&\'"]+([&\'"])@','default='.urlencode($identiconurl).'\1',$avatar);
+		}else{
+			$newavatar=preg_replace('@(src=(["\'])http://[^?]+\?)@','\1default='.urlencode($identiconurl).'&amp;',$avatar);
+		}
 		$avatar=$newavatar;
 	}
 	return($avatar);
