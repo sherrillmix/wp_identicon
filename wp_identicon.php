@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: WP_Identicon
-Version: 1.01
+Version: 1.02
 Plugin URI: http://scott.sherrillmix.com/blog/blogger/wp_identicon/
 Description: This plugin generates persistent specific geometric icons for each user based on the ideas of <a href="http://www.docuverse.com/blog/donpark/2007/01/18/visual-security-9-block-ip-identification">Don Park</a>.
 Author: Scott Sherrill-Mix
@@ -459,13 +459,32 @@ function identicon_build($seed='',$altImgText='',$img=true,$outsize='',$write=tr
 function identicon_get_avatar($avatar, $id_or_email, $size, $default){
 	global $identicon;
 	if(!isset($identicon)) return $avatar;
-	if(!$avatar) return identicon_build($id_or_email->comment_author_email,'','',true,$size);
+	$email = '';
+	if ( is_numeric($id_or_email) ) {
+		$id = (int) $id_or_email;
+		$user = get_userdata($id);
+		if ( $user )
+			$email = $user->user_email;
+	} elseif ( is_object($id_or_email) ) {
+		if ( !empty($id_or_email->user_id) ) {
+			$id = (int) $id_or_email->user_id;
+			$user = get_userdata($id);
+			if ( $user)
+				$email = $user->user_email;
+		} elseif ( !empty($id_or_email->comment_author_email) ) {
+			$email = $id_or_email->comment_author_email;
+		}
+	} else {
+		$email = $id_or_email;
+	}
+
+	if(!$avatar) return identicon_build($email,'','',true,$size);
 	if(!$identicon->identicon_options['gravatar']){
-		$identiconurl=identicon_build($id_or_email->comment_author_email,'',false);
+		$identiconurl=identicon_build($email,'',false);
 		$newavatar=preg_replace('@src=(["\'])http://[^"\']+["\']@','src=\1'.$identiconurl.'\1',$avatar);
 		$avatar=$newavatar;
 	}elseif($identicon->identicon_options['gravatar']==1){
-		$identiconurl=identicon_build($id_or_email->comment_author_email,'',false,'',true,true,$size,false);
+		$identiconurl=identicon_build($email,'',false,'',true,true,$size,false);
 		if(strpos($avatar,'default=http://')!==false){
 			$newavatar=preg_replace('@default=http://[^&\'"]+([&\'"])@','default='.urlencode($identiconurl).'\1',$avatar);
 		}else{
